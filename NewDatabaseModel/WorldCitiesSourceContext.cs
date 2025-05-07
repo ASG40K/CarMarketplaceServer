@@ -17,6 +17,8 @@ public partial class WorldCitiesSourceContext : IdentityDbContext<WorldCitiesUse
     {
     }
 
+    public DbSet<CarListing> CarListings { get; set; } = null!;
+
     public virtual DbSet<City> Cities { get; set; }
 
     public virtual DbSet<Country> Countries { get; set; }
