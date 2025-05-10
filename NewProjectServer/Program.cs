@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using NewDatabaseModel;
 using Microsoft.IdentityModel.Tokens;
 using NewProjectServer;
-using Microsoft.OpenApi.Models;
+
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -13,50 +13,17 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c => {
-    c.SwaggerDoc("v1", new()
-    {
-        Contact = new()
-        {
-            Email = "user@email",
-            Name = "user",
-            Url = new("https://canvas.csun.edu/courses/128137")
-        },
-        Description = "APIs for World Cities",
-        Title = "World Cities APIs",
-        Version = "V1"
-    });
-    OpenApiSecurityScheme jwtSecurityScheme = new()
-    {
-        Scheme = "bearer",
-        BearerFormat = "JWT",
-        Name = "JWT Authentication",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.Http,
-        Description = "Please enter *only* JWT token",
-        Reference = new OpenApiReference
-        {
-            Id = JwtBearerDefaults.AuthenticationScheme,
-            Type = ReferenceType.SecurityScheme
-        }
-    };
-    c.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, jwtSecurityScheme);
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        { jwtSecurityScheme, [] }
-    });
-});
-builder.Services.AddDbContext<WorldCitiesSourceContext>(options => 
-
- options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+builder.Services.AddSwaggerGen();
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
-builder.Services.AddScoped<JwtHandler>();
-builder.Services.AddIdentity<WorldCitiesUser, IdentityRole>()
-    .AddEntityFrameworkStores<WorldCitiesSourceContext>();
+
+// Adding authentication tabs for our framework using JwtBearer Defaults
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    // And add the corresponding options for JwtBearer
 }).AddJwtBearer(options =>
 {
     options.TokenValidationParameters = new()
@@ -65,16 +32,22 @@ builder.Services.AddAuthentication(options =>
         RequireExpirationTime = true,
         ValidateAudience = true,
         ValidateIssuer = true,
-        ValidateIssuerSigningKey = true,
+        ValidateIssuerSigningKey = true, // Crucial, otherwise password isn't checked.
 
         ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
         ValidAudience = builder.Configuration["JwtSettings:Audience"],
+        // Temporarily generate a SymmetricSecurityKey with string type encoding
         IssuerSigningKey = new SymmetricSecurityKey(
             System.Text.Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecurityKey"]))
         ?? throw new InvalidOperationException()
-
     };
 });
+
+builder.Services.AddIdentity<CarUser, IdentityRole>()
+    .AddEntityFrameworkStores<AppDbContext>();
+
+// Inject our dependencies into the builder to ensure JWT can be handled
+builder.Services.AddScoped<JwtHandler>();
 
 var app = builder.Build();
 
@@ -84,7 +57,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
 
 app.UseCors(option => option.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
 

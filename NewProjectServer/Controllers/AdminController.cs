@@ -12,12 +12,12 @@ namespace NewProjectServer.Controllers
     [ApiController]
 
 
-    public class AdminController(UserManager<WorldCitiesUser> userManager, JwtHandler jwtHandler) : ControllerBase
+    public class AdminController(UserManager<CarUser> userManager, JwtHandler jwtHandler) : ControllerBase
     {
         [HttpPost("Login")]
         public async Task<ActionResult> LoginAsync(LoginRequestDto request)
         {
-            WorldCitiesUser user = await userManager.FindByNameAsync(request.UserName);
+            CarUser? user = await userManager.FindByNameAsync(request.UserName);
             if (user == null) {
                 return Unauthorized("Unkwown User");
             }
