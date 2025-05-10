@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace NewDatabaseModel
 {
-     public class WorldCitiesUser: IdentityUser
+    public class CarUser: IdentityUser
     {
     }
 }

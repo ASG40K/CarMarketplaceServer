@@ -7,9 +7,9 @@ using System.Text;
 
 namespace NewProjectServer;
 
-    public class JwtHandler (IConfiguration configuration, UserManager<WorldCitiesUser> userManager)
+    public class JwtHandler (IConfiguration configuration, UserManager<CarUser> userManager)
     {
-    public async Task<JwtSecurityToken> GetTokenAsync(WorldCitiesUser user) =>
+    public async Task<JwtSecurityToken> GetTokenAsync(CarUser user) =>
        new(
            issuer: configuration["JwtSettings:Issuer"],
            audience: configuration["JwtSettings:Audience"],
@@ -24,7 +24,7 @@ namespace NewProjectServer;
         return new SigningCredentials(secret, SecurityAlgorithms.HmacSha256);
     }
 
-    private async Task<List<Claim>> GetClaimsAsync(WorldCitiesUser user)
+    private async Task<List<Claim>> GetClaimsAsync(CarUser user)
     {
         List<Claim> claims = [new Claim(ClaimTypes.Name, user.UserName!)];
         claims.AddRange(from role in await userManager.GetRolesAsync(user) select new Claim(ClaimTypes.Role, role));
